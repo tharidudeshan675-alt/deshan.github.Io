@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto Trade Analyzer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 { text-align: center; color: #222; }
+    .upload-box {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input[type="file"] { margin-top: 10px; }
+    button {
+      background: #2563eb; color: white; border: none;
+      padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 15px;
+    }
+    button:hover { opacity: 0.9; }
+    .result {
+      margin-top: 25px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      background: #fafafa;
+    }
+    .signal { font-size: 25px; font-weight: bold; }
+    .buy { color: green; }
+    .sell { color: red; }
+    .neutral { color: gray; }
+    .tp, .sl {
+      background: #f1f5f9; padding: 8px; border-radius: 6px; margin: 6px 0;
+    }
+    .sl { background: #fee2e2; color: #b91c1c; }
+    img { max-width: 100%; max-height: 150px; margin-top: 10px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Auto Trade Analyzer</h1>
+    <p>15m chart එකක් සහ 4h chart screenshot එකක් upload කරන්න:</p>
+
+    <div class="upload-box">
+      <label>15M Chart Screenshot</label><br>
+      <input type="file" id="img15m" accept="image/*">
+      <div id="preview15m"></div>
+    </div>
+
+    <div class="upload-box">
+      <label>4H Chart Screenshot</label><br>
+      <input type="file" id="img4h" accept="image/*">
+      <div id="preview4h"></div>
+    </div>
+
+    <button id="analyzeBtn">Auto Analyze</button>
+
+    <div id="result" class="result" style="display:none;"></div>
+  </div>
+
+  <script>
+    const img15mInput = document.getElementById('img15m');
+    const img4hInput = document.getElementById('img4h');
+    const resultBox = document.getElementById('result');
+    const preview15m = document.getElementById('preview15m');
+    const preview4h = document.getElementById('preview4h');
+
+    img15mInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) preview15m.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
+    });
+    img4hInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) preview4h.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
+    });
+
+    document.getElementById('analyzeBtn').addEventListener('click', async () => {
+      const img15m = img15mInput.files[0];
+      const img4h = img4hInput.files[0];
+
+      if (!img15m || !img4h) {
+        alert('කරුණාකර දෙකම chart images උඩුගත කරන්න!');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('image15m', img15m);
+      formData.append('image4h', img4h);
+
+      try {
+        // Replace URL with your actual AI API endpoint
+        const response = await fetch('https://api.chartpatterns.ai/analyze', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer YOUR_API_KEY' },
+          body: formData
+        });
+
+        const result = await response.json();
+        displayResult(result);
+      } catch (e) {
+        console.error(e);
+        alert('Analysis failed. Make sure your API key and endpoint are correct.');
+      }
+    });
+
+    function displayResult(result) {
+      resultBox.style.display = 'block';
+      resultBox.innerHTML = `
+        <div class="signal ${result.signal.toLowerCase()}">${result.signal}</div>
+        <div>TP1: ${result.tp1}</div>
+        <div>TP2: ${result.tp2}</div>
+        <div>TP3: ${result.tp3}</div>
+        <div class="sl">Stop Loss: ${result.stop_loss}</div>
+      `;
+    }
+  </script>
+</body>
+</html>
